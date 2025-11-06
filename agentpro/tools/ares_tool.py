@@ -31,12 +31,14 @@ class AresInternetTool(Tool):
             return "❌ Error: Ares API key is missing. Please provide it during initialization or set the ARES_API_KEY environment variable."
 
         api_url = "https://api-ares.traversaal.ai/live/predict"
-        prompt = input_text.strip("'\"")
+        prompt = str(input_text).strip("'\"")
         payload = {"query": prompt}
         headers = {
             "x-api-key": api_key,
             "content-type": "application/json"
         }
+
+        print(f"Sending payload: {payload}")
 
         try:
             response = requests.post(api_url, json=payload, headers=headers, timeout=30)
