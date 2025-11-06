@@ -38,7 +38,7 @@ class AresInternetTool(Tool):
             "content-type": "application/json"
         }
 
-        print(f"Sending payload: {payload}")
+        # print(f"Sending payload: {payload}")
 
         try:
             response = requests.post(api_url, json=payload, headers=headers, timeout=30)
