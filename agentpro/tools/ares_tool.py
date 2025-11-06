@@ -32,7 +32,7 @@ class AresInternetTool(Tool):
 
         api_url = "https://api-ares.traversaal.ai/live/predict"
         prompt = input_text.strip("'\"")
-        payload = {"query": [prompt]}
+        payload = {"query": prompt}
         headers = {
             "x-api-key": api_key,
             "content-type": "application/json"
