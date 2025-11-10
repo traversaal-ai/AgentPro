@@ -1,21 +1,16 @@
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
 import requests
 import json
 import openai
 from .tools import Tool
 from .agent import Action, Observation, ThoughtStep, AgentResponse
 from .model import ModelClient, create_model
-
 import re
 from datetime import datetime
 
-
-
 class ReactAgent:
     def __init__(self, model: Optional[ModelClient] = None, tools: List[Tool] = None, custom_system_prompt: str = None, max_iterations: int = 20):
-
         self.client = model or create_model(provider="openai")
-
         self.max_iterations = max_iterations
 
         # Get Tool Details
@@ -101,8 +96,36 @@ Final Answer: Provide a complete, well-structured response that directly address
             user_prompt=prompt,
             )
 
+
+    def extract_thought_from_response(self,full_response: str) -> str:
+        # 1. Extract everything before 'Action:'
+        pre_action_match = re.search(r"^(.*?)(?=Action:|Final Answer:)", full_response, re.DOTALL)
+        if not pre_action_match:
+            return None  # Nothing to extract
+
+        thought_segment = pre_action_match.group(1)
+
+        # 2. Remove known prefixes/markers
+        markers_to_remove = [
+            r"🤖\s*\[Debug\]\s*Step LLM Response:\s*",
+            r"Step LLM Response:\s*",
+            r"Thought:\s*",
+            r"thought:\s*",
+            r"</think>\s*"
+        ]
+
+        for marker in markers_to_remove:
+            thought_segment = re.sub(marker, "", thought_segment, flags=re.IGNORECASE)
+
+        # 3. Normalize whitespace
+        thought_segment = thought_segment.strip()
+
+        return thought_segment if thought_segment else None
+    
     def run(self, query: str) -> AgentResponse:
         thought_process: List[ThoughtStep] = []
+        tool_calls: List[str] = []
+        full_thoughts : List[str] = []
         printed_prompt = False  # <<< ADD A FLAG
         iterations_count = 0
         
@@ -133,9 +156,13 @@ Final Answer: Provide a complete, well-structured response that directly address
             # Run LLM model
             if self.client:
                 step_text = self._get_llm_response(prompt)
+                if (thought := self.extract_thought_from_response(full_response=step_text)):
+                    full_thoughts.append(thought)
             else:
                 return AgentResponse(
                     thought_process=thought_process,
+                    tool_calls=tool_calls,
+                    full_thoughts=full_thoughts,
                     final_answer="❌ No LLM is Connected. Please set and pass the OPENAI_API_KEY to AgentPro."
                 )
 
@@ -145,8 +172,7 @@ Final Answer: Provide a complete, well-structured response that directly address
             if "Final Answer:" in step_text and "Action:" not in step_text:
                 # Try to find last Thought before Final Answer
                 thought_match = re.search(r"Thought:\s*(.*?)(?:Action:|PAUSE:|Final Answer:|$)", step_text, re.DOTALL)
-                pause_match = re.search(r"PAUSE:\s*(.*?)(?:Thought:|Action:|Final Answer:|$)", step_text, re.DOTALL)
-                    
+                pause_match = re.search(r"PAUSE:\s*(.*?)(?:Thought:|Action:|Final Answer:|$)", step_text, re.DOTALL)  
                 # Extract Thought if found
                 if thought_match:
                     thought = thought_match.group(1).strip()
@@ -169,6 +195,8 @@ Final Answer: Provide a complete, well-structured response that directly address
                     print("✅ Parsed Final Answer:", final_answer)
 
                 return AgentResponse(
+                    tool_calls=tool_calls,
+                    full_thoughts=full_thoughts,
                     thought_process=thought_process,
                     final_answer=final_answer
                 )
@@ -195,9 +223,11 @@ Final Answer: Provide a complete, well-structured response that directly address
                             action_type=action_data["action_type"],
                             input=action_data["input"]
                         )
-
+                        tool_calls.append(action.action_type)
                         # Execute action
                         result = self.execute_tool(action)
+                        if (thought := self.extract_thought_from_response(full_response=result)):
+                            full_thoughts.append(thought)
                         print("✅ Parsed Action Results:", result)
                         observation = Observation(result=result)
 
@@ -245,6 +275,8 @@ Final Answer: Provide a complete, well-structured response that directly address
         
         # # If exceeded max steps
         return AgentResponse(
+            tool_calls=tool_calls,
+            full_thoughts=full_thoughts,
             thought_process=thought_process,
             final_answer="❌ Stopped after reaching maximum iterations limit."
         )
