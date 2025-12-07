@@ -6,7 +6,8 @@ from .ares_tool import AresInternetTool
 from .yfinance_tool import YFinanceTool
 from .traversaalpro_rag_tool import TraversaalProRAGTool
 from .slide_generation_tool import SlideGenerationTool
-
+from .data_tool import DataTool
+from .code_tool import CodeEngine
 __all__ = [
     "Tool",
     "QuickInternetTool",
@@ -15,5 +16,7 @@ __all__ = [
     "AresInternetTool",
     "YFinanceTool",
     "TraversaalProRAGTool",
-    "SlideGenerationTool"
+    "SlideGenerationTool",
+    "CodeEngine",
+    "DataTool"
 ]
