@@ -213,9 +213,9 @@ This project is licensed under the Apache 2.0 License - see the LICENSE file for
 If you find AgentPro useful in your research, please consider citing our work:
 
 ```bibtex
-@software{agentpro2026,
-  author       = {{Muhammad Ali Shafique}},
+@software{traversaalagentpro2026,
   title        = {AgentPro: A Lightweight ReAct-Style Agentic Framework},
+  author       = {Muhammad Ali Shafique},
   year         = {2026},
   url          = {https://github.com/traversaal-ai/AgentPro},
   note         = {GitHub repository}
