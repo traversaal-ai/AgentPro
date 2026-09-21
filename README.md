@@ -220,3 +220,4 @@ If you find AgentPro useful in your research, please consider citing our work:
   url          = {https://github.com/traversaal-ai/AgentPro},
   note         = {GitHub repository}
 }
+```
