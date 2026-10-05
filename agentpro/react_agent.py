@@ -18,7 +18,7 @@ class ReactAgent:
 
         self.max_iterations = max_iterations
 
-        # Get Tool Details
+        # Get Tool Detail
         self.tools = tools or []
         self.tool_registry = {tool.action_type: tool for tool in self.tools}
         # Build dynamic system prompt
